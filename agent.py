@@ -19,6 +19,7 @@ class Agent(object):
 		self.actions = [-1, 0, 1]
 		self.env = Environment()
 		self.is_undo = False
+		self.accumulative_reward = 0
 		
 		
 	def agent_start(self):
@@ -123,13 +124,13 @@ def no_response():
 	if steps > 100000:
 		quit()
 	#print("****************************", steps)
-	th = threading.Timer(0.00001, no_response)
+	th = threading.Timer(0.0001, no_response)
 	th.start()
 	#a = scale.get()
 	res = vsub.getreward(agt.env.env_soundscape)
 	#print(res)
 	reward = agt.env.updateStateActionValue(act, st, res, t)
-	
+	agt.accumulative_reward += reward
 	# end of episode, reached the goal
 	if reward == float('inf'):
 		#th.cancel()
@@ -148,7 +149,7 @@ def sel():
 
 def quit():
 	global root, th, agt
-	print(agt.action_values)
+	print(agt.accumulative_reward)
 	th.cancel()
 	#root.destroy()
 
@@ -193,3 +194,5 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
+	#-101422.57142857142
