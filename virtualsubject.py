@@ -33,10 +33,11 @@ class Subject(object):
 
 	def distance(self, dist):
 		#return math.exp(-0.1*dist)-1
-		if dist > 10:
+		if dist >= 4:
 			return -1
 		else:
-			return -0.2 * (dist - 5)
+			return -0.5 * (dist - 2)
+		#return dist
 
 	def getreward(self, env_vec):
 		distance = 0
@@ -48,11 +49,11 @@ class Subject(object):
 
 
 		dist = self.distance(distance) 
-		#print("distance", distance)
+		#print("distance", dist)
 		#if (distance > 5):
 		#	return -1 + 0.3 * diff
 		#	return -1
 		#else:
 		#	return 0.7 * (-0.2 * (distance - 5)) + 0.3 * diff
 		#	return -0.2 * (distance - 5)
-		return dist
+		return round(dist, 1)

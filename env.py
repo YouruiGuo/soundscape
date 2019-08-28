@@ -40,7 +40,7 @@ class Environment(object):
 		"""
 		self.env_soundscape = []
 		#self.goal_soundscape = []
-		self.stateActionValue = defaultdict(list)
+		#self.stateActionValue = defaultdict(list)
 		self.n = 2
 		for i in range(self.n):
 			self.env_soundscape.append(defaultdict(list)) 
@@ -62,7 +62,8 @@ class Environment(object):
 			# random number [0, 10), 1 decimal
 			self.env_soundscape[i]['vol'] = round(np.random.rand()*10, 1)
 		#self.ctl.set_init_volume(self.env_soundscape[:]['vol'])
-		print(self.env_soundscape)
+		self.curr_state = self.env_soundscape
+		#print(self.env_soundscape)
 		#print(self.goal_soundscape)
 	
 	def isGoal(self, total_reward):
@@ -75,14 +76,17 @@ class Environment(object):
 
 		send_action(a)
 
-		self.getNextState(a)
+		re = self.getNextState(a)
 		'''
 		if res == None:
 			self.reward = math.tanh(t)
 		else:
 			self.reward = -1
 		'''
-		self.reward = res
+		if re:
+			self.reward = -1
+		else:
+			self.reward = res
 
 
 		self.next_state = self.env_soundscape
@@ -96,17 +100,21 @@ class Environment(object):
 	def getNextState(self, a):
 		#print(a)
 		self.env_soundscape[a[0]]['vol'] += a[1]
+		if self.env_soundscape[a[0]]['vol'] < 0 or self.env_soundscape[a[0]]['vol'] > 10:
+			self.env_soundscape[a[0]]['vol'] -= a[1]
+			return True
 
 	def updateStateActionValue(self, a, s, res, t):
 
 		self.biofeedback(a, res, t)
 	
-		r = self.Q
+		r = self.reward
 		#print("reward: ", r)
 		#print(self.env_soundscape)
-		if self.isGoal(r):
-			return float('inf')
+		#if self.isGoal(self.Q):
+		#	return float('inf')
 		self.curr_state = self.next_state
+		#print(self.curr_state)
 		return r
 
 

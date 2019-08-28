@@ -5,6 +5,7 @@ from env import Environment
 import threading
 import time
 from virtualsubject import Subject
+import numpy.random as rnd
 
 class Agent(object):
 	"""docstring for Agent"""
@@ -15,8 +16,15 @@ class Agent(object):
 		self.env = Environment()
 		self.is_undo = False
 		self.accumulative_reward = 0
+		self.range = [0,1,2,3,4,5,6,7,8,9,10]
+		self.rangelen = len(self.range)-1
+		self.state_action_value = np.zeros((self.rangelen**self.env.n, len(self.actions)*self.env.n))
+		self.alpha = 0.7
+		self.gamma = 1
+
 
 	def agent_start(self):
+		#print(self.env.curr_state)
 		curr_state = self.env.curr_state
 		self.num = self.env.n
 		self.action_values = np.zeros(shape=(self.num,len(self.actions)))
@@ -25,22 +33,58 @@ class Agent(object):
 		n = np.random.randint(self.num)
 		action = [n, stepsize * self.actions[np.random.randint(3)]]
 		self.prev_action = action
+		self.prev_state = curr_state
 		return action, curr_state
 
 	def agent_step(self, r):
-
-		curr_state = self.env.next_state
-		stepsize = self.getStepSize(r)
+		prev_sn = self.state_to_num(self.prev_state)
+		prev_an = self.action_to_num(self.prev_action)
+		curr_state = self.env.curr_state
+		curr_sn = self.state_to_num(curr_state)
 		
-		n = np.random.randint(self.num)
-		ac = stepsize * self.actions[np.random.randint(3)]
-		#print(n, ac)
-		action = [n, ac]
+		self.state_action_value[prev_sn][prev_an] += self.alpha * \
+			(r + self.gamma * np.max(self.state_action_value[curr_sn]) - self.state_action_value[prev_sn][prev_an])
+		
+
+		stepsize = self.getStepSize(r)
+		epsilon = rnd.uniform()
+		if (epsilon < 0.2):
+			n = np.random.randint(self.num)
+			ac = stepsize * self.actions[np.random.randint(3)]
+			#print(n, ac)
+			action = [n, ac]
+		else:
+			a = np.argmax(self.state_action_value[curr_sn])
+			action = [int(a/len(self.actions)), 0.01 * self.actions[a%len(self.actions)]]
+		
 		self.prev_action = action
+		self.prev_state = curr_state
 		return action, curr_state
 
 	def getStepSize(self, r):
 		return 0.1
+
+	def inrange(self, num):
+		for i in range(self.rangelen):
+			if num >= self.range[i] and num < self.range[i+1]:
+				return self.range[i]
+
+
+	def state_to_num(self, state):
+		#print(state)
+		num = 0
+		for i in range(len(state)-1):
+			#print(state[i]['vol'])
+			num += self.inrange(state[i]['vol'])
+			num *= 10
+		#print(state[len(state)-1]['vol'])
+		num += self.inrange(state[len(state)-1]['vol'])
+
+		return int(num)
+
+	def action_to_num(self, action):
+		return int(action[0]*len(self.actions) + int(np.sign(action[1])))
+
 
 def no_response():
 	global act, st, reward, steps, start_time
@@ -50,9 +94,9 @@ def no_response():
 	if steps > 10000:
 		print("accumulative_reward",agt.accumulative_reward)
 		quit()
-	else: 
+	else:
 		#print("****************************", steps)
-		th = threading.Timer(0.0001, no_response)
+		th = threading.Timer(0.001, no_response)
 		th.start()
 		#a = scale.get()
 		res = vsub.getreward(agt.env.env_soundscape)
@@ -72,7 +116,7 @@ def no_response():
 
 
 def quit():
-	global root, th, agt
+	global root, th, agt, vsub
 	print("accumulative_reward",agt.accumulative_reward)
 	print("vector:", agt.env.curr_state)
 	print("goal:", vsub.goal_vec)
@@ -92,7 +136,6 @@ def main():
 	start_time = time.time()
 	steps = 0
 	agt = Agent()
-	#print(agt.env.next_state)
 	act, st = agt.agent_start()
 	#print(act, st)
 	vsub.init(agt.env)
@@ -101,8 +144,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
-
-
-
-	#-68093.69191840113
